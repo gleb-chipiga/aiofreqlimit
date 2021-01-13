@@ -1,9 +1,5 @@
-.coverage
-.env
-.idea
-.mypy_cache
-.hypothesis
-.pytest_cache
+.*
+!.gitignore
 *.egg-info
 build
 dist
