@@ -23,6 +23,7 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'License :: OSI Approved :: MIT License',
         'Development Status :: 2 - Pre-Alpha',
         'Operating System :: POSIX',
