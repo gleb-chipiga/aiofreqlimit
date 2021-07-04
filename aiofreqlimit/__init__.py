@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager, contextmanager, suppress
 from typing import AsyncGenerator, Dict, Final, Generator, Hashable, Optional
 
 __all__ = ('FreqLimit', '__version__')
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 import attr
 
