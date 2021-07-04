@@ -1,9 +1,19 @@
 import asyncio
-from contextlib import asynccontextmanager, suppress
-from typing import AsyncGenerator, Dict, Final, Hashable, Optional
+from contextlib import asynccontextmanager, contextmanager, suppress
+from typing import AsyncGenerator, Dict, Final, Generator, Hashable, Optional
 
 __all__ = ('FreqLimit', '__version__')
 __version__ = '0.0.1'
+
+import attr
+
+
+@attr.s(auto_attribs=True)
+class Lock:
+    count: int = 0
+    ts: float = -float('inf')
+    lock: asyncio.Lock = attr.ib(factory=asyncio.Lock,
+                                 on_setattr=attr.setters.frozen)
 
 
 class FreqLimit:
@@ -17,10 +27,10 @@ class FreqLimit:
         self._interval: Final[float] = interval
         self._clean_interval: Final[float] = (
             clean_interval if clean_interval > 0 else interval)
-        self._events: Final[Dict[Hashable, asyncio.Event]] = {}
-        self._ts: Final[Dict[Hashable, float]] = {}
+        self._locks: Final[Dict[Hashable, Lock]] = {}
         self._clean_event: Final = asyncio.Event()
         self._clean_task: Optional[asyncio.Task[None]] = None
+        self._loop: Final = asyncio.get_running_loop()
 
     async def clear(self) -> None:
         if self._clean_task is not None:
@@ -28,48 +38,42 @@ class FreqLimit:
             with suppress(asyncio.CancelledError):
                 await self._clean_task
             self._clean_task = None
-        self._events.clear()
-        self._ts.clear()
+        self._locks.clear()
         self._clean_event.clear()
 
     @asynccontextmanager
     async def acquire(
         self, key: Hashable = None
     ) -> AsyncGenerator[None, None]:
-        loop = asyncio.get_running_loop()
         if self._clean_task is None:
-            self._clean_task = loop.create_task(self._clean())
-        while True:
-            if key not in self._events:
-                self._events[key] = asyncio.Event()
-                self._ts[key] = -float('inf')
-                break
-            else:
-                await self._events[key].wait()
-                if key in self._events and self._events[key].is_set():
-                    self._events[key].clear()
-                    break
-        delay = self._interval - loop.time() + self._ts[key]
-        if delay > 0:
-            await asyncio.sleep(delay)
-        self._ts[key] = loop.time()
-        try:
-            yield
-        finally:
-            self._events[key].set()
+            self._clean_task = asyncio.create_task(self._clean())
+        if key not in self._locks:
+            self._locks[key] = Lock()
+        with self._count(key):
+            async with self._locks[key].lock:
+                delay = (self._interval - self._loop.time() +
+                         self._locks[key].ts)
+                if delay > 0:
+                    await asyncio.sleep(delay)
+                self._locks[key].ts = self._loop.time()
+                yield
+
+    @contextmanager
+    def _count(self, key: Hashable) -> Generator[None, None, None]:
+        assert key in self._locks
+        self._locks[key].count += 1
+        yield
+        self._locks[key].count -= 1
+        if self._locks[key].count == 0:
             self._clean_event.set()
 
     async def _clean(self) -> None:
-        loop = asyncio.get_running_loop()
         while True:
-            if len(self._events) == 0:
+            if len(self._locks) == 0:
                 await self._clean_event.wait()
                 self._clean_event.clear()
-            for key, event in self._events.copy().items():
-                age = loop.time() - self._ts[key]
-                if event.is_set() and age >= self._clean_interval:
-                    del self._events[key]
-            for key in self._ts.copy().keys():
-                if key not in self._events:
-                    del self._ts[key]
+            for key in tuple(self._locks):
+                age = self._loop.time() - self._locks[key].ts
+                if self._locks[key].count == 0 and age >= self._clean_interval:
+                    del self._locks[key]
             await asyncio.sleep(self._clean_interval)
