@@ -72,6 +72,13 @@ async def test_freq_limit() -> None:
 
     await asyncio.sleep(.11)
     assert tuple(freq_limit._locks) == ()
+
+    async with freq_limit.acquire('key'):
+        pass
+    assert tuple(freq_limit._locks) == ('key',)
+    await asyncio.sleep(.33)
+    assert tuple(freq_limit._locks) == ()
+
     await freq_limit.clear()
     assert freq_limit._clean_task is None
     assert tuple(freq_limit._locks) == ()
