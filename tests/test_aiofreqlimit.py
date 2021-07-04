@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import suppress
 from weakref import ref
 from random import uniform
 from typing import List, Tuple, cast
@@ -7,13 +8,31 @@ import pytest
 from hypothesis import given
 from hypothesis.strategies import floats
 
-from aiofreqlimit import FreqLimit
+import aiofreqlimit
+
+
+@pytest.mark.asyncio
+async def test_lock_context_manager() -> None:
+    lock = aiofreqlimit.Lock()
+
+    with lock.count_context():
+        assert lock.count == 1
+        with lock.count_context():
+            assert lock.count == 2
+        assert lock.count == 1
+    assert lock.count == 0
+
+    with suppress(RuntimeError):
+        with lock.count_context():
+            assert lock.count == 1
+            raise RuntimeError()
+    assert lock.count == 0
 
 
 @given(interval=floats(max_value=0))
 def test_freq_limit_interval(interval: float) -> None:
     with pytest.raises(RuntimeError, match='Interval must be greater than 0'):
-        FreqLimit(interval)
+        aiofreqlimit.FreqLimit(interval)
 
 
 @given(interval=floats(min_value=0, exclude_min=True),
@@ -22,17 +41,17 @@ def test_freq_limit_clean_interval(interval: float,
                                    clean_interval: float) -> None:
     with pytest.raises(RuntimeError, match='Clean interval must be greater '
                                            'than or equal to 0'):
-        FreqLimit(interval, clean_interval)
+        aiofreqlimit.FreqLimit(interval, clean_interval)
 
 
 @pytest.mark.asyncio
 async def test_freq_limit() -> None:
-    freq_limit = FreqLimit(.1)
+    freq_limit = aiofreqlimit.FreqLimit(.1)
     loop = asyncio.get_running_loop()
     time_marks = Tuple[float, float, float]
 
     async def limit(
-        _freq_limit: FreqLimit, interval: float
+        _freq_limit: aiofreqlimit.FreqLimit, interval: float
     ) -> time_marks:
         time1 = loop.time()
         async with _freq_limit.acquire('key'):
@@ -61,7 +80,7 @@ async def test_freq_limit() -> None:
 
 @pytest.mark.asyncio
 async def test_freq_limit_keys() -> None:
-    freq_limit = FreqLimit(.1)
+    freq_limit = aiofreqlimit.FreqLimit(.1)
     assert tuple(freq_limit._locks) == ()
     async with freq_limit.acquire('key2'):
         assert tuple(freq_limit._locks.keys()) == ('key2',)
@@ -80,13 +99,13 @@ async def test_freq_limit_keys() -> None:
 @pytest.mark.asyncio
 async def test_freq_limit_overlaps() -> None:
 
-    async def task1(_freq_limit: FreqLimit) -> None:
+    async def task1(_freq_limit: aiofreqlimit.FreqLimit) -> None:
         async with _freq_limit.acquire('key1'):
             assert tuple(_freq_limit._locks) == ('key1',)
             await asyncio.sleep(.11)
             assert tuple(_freq_limit._locks) == ('key1', 'key2')
 
-    async def task2(_freq_limit: FreqLimit) -> None:
+    async def task2(_freq_limit: aiofreqlimit.FreqLimit) -> None:
         await asyncio.sleep(.05)
         assert tuple(_freq_limit._locks) == ('key1',)
         async with _freq_limit.acquire('key2'):
@@ -94,7 +113,7 @@ async def test_freq_limit_overlaps() -> None:
             await asyncio.sleep(.16)
             assert tuple(_freq_limit._locks) == ('key2', 'key3')
 
-    async def task3(_freq_limit: FreqLimit) -> None:
+    async def task3(_freq_limit: aiofreqlimit.FreqLimit) -> None:
         await asyncio.sleep(.21)
         assert tuple(_freq_limit._locks) == ('key2',)
         async with _freq_limit.acquire('key3'):
@@ -112,7 +131,7 @@ async def test_freq_limit_overlaps() -> None:
         await asyncio.sleep(.1)
         assert tuple(_freq_limit._locks) == ()
 
-    freq_limit = FreqLimit(.1)
+    freq_limit = aiofreqlimit.FreqLimit(.1)
     await asyncio.gather(
         task1(freq_limit),
         task2(freq_limit),
@@ -126,7 +145,7 @@ async def test_freq_limit_frequency() -> None:
     loop = asyncio.get_running_loop()
     intervals: List[float] = []
     time = loop.time()
-    freq_limit = FreqLimit(.05)
+    freq_limit = aiofreqlimit.FreqLimit(.05)
     lock_ref = None
     for i in range(10):
         async with freq_limit.acquire('key'):

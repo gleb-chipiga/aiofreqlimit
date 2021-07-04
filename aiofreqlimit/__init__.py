@@ -1,6 +1,8 @@
 import asyncio
-from contextlib import asynccontextmanager, contextmanager, suppress
-from typing import AsyncGenerator, Dict, Final, Generator, Hashable, Optional
+from contextlib import (AsyncExitStack, asynccontextmanager, contextmanager,
+                        suppress)
+from typing import (AsyncContextManager, AsyncIterator, ContextManager, Dict,
+                    Final, Hashable, Iterator, Optional, cast)
 
 __all__ = ('FreqLimit', '__version__')
 __version__ = '0.0.2'
@@ -10,10 +12,18 @@ import attr
 
 @attr.s(auto_attribs=True)
 class Lock:
-    count: int = 0
-    ts: float = -float('inf')
-    lock: asyncio.Lock = attr.ib(factory=asyncio.Lock,
+    count: int = attr.ib(default=0, init=False)
+    ts: float = attr.ib(default=-float('inf'), init=False)
+    lock: asyncio.Lock = attr.ib(init=False, factory=asyncio.Lock,
                                  on_setattr=attr.setters.frozen)
+
+    @contextmanager
+    def count_context(self) -> Iterator[None]:
+        self.count += 1
+        try:
+            yield
+        finally:
+            self.count -= 1
 
 
 class FreqLimit:
@@ -32,6 +42,26 @@ class FreqLimit:
         self._clean_task: Optional[asyncio.Task[None]] = None
         self._loop: Final = asyncio.get_running_loop()
 
+    @asynccontextmanager
+    async def acquire(
+        self, key: Hashable = None
+    ) -> AsyncIterator[None]:
+        if self._clean_task is None:
+            self._clean_task = asyncio.create_task(self._clean())
+        if key not in self._locks:
+            self._locks[key] = Lock()
+        async with AsyncExitStack() as stack:
+            stack.callback(self._clean_event.set)
+            stack.enter_context(
+                cast(ContextManager[None], self._locks[key].count_context()))
+            await stack.enter_async_context(
+                cast(AsyncContextManager[None], self._locks[key].lock))
+            delay = self._interval - self._loop.time() + self._locks[key].ts
+            if delay > 0:
+                await asyncio.sleep(delay)
+            self._locks[key].ts = self._loop.time()
+            yield
+
     async def clear(self) -> None:
         if self._clean_task is not None:
             self._clean_task.cancel()
@@ -40,32 +70,6 @@ class FreqLimit:
             self._clean_task = None
         self._locks.clear()
         self._clean_event.clear()
-
-    @asynccontextmanager
-    async def acquire(
-        self, key: Hashable = None
-    ) -> AsyncGenerator[None, None]:
-        if self._clean_task is None:
-            self._clean_task = asyncio.create_task(self._clean())
-        if key not in self._locks:
-            self._locks[key] = Lock()
-        with self._count(key):
-            async with self._locks[key].lock:
-                delay = (self._interval - self._loop.time() +
-                         self._locks[key].ts)
-                if delay > 0:
-                    await asyncio.sleep(delay)
-                self._locks[key].ts = self._loop.time()
-                yield
-
-    @contextmanager
-    def _count(self, key: Hashable) -> Generator[None, None, None]:
-        assert key in self._locks
-        self._locks[key].count += 1
-        yield
-        self._locks[key].count -= 1
-        if self._locks[key].count == 0:
-            self._clean_event.set()
 
     async def _clean(self) -> None:
         while True:
