@@ -186,10 +186,10 @@ async def test_freq_limit_frequency() -> None:
     time = loop.time()
     freq_limit = aiofreqlimit.FreqLimit(.05)
     lock_ref = None
-    for i in range(10):
+    for index in range(10):
         async with freq_limit.resource('key'):
             pass
-        if i == 0:
+        if index == 0:
             lock_ref = ref(freq_limit._locks['key'])
         else:
             intervals.append(loop.time() - time)
@@ -197,5 +197,5 @@ async def test_freq_limit_frequency() -> None:
             assert lock_ref() is freq_limit._locks['key']
         time = loop.time()
         assert 'key' in freq_limit._locks
-    assert all(interval >= .05 for interval in intervals)
+    assert all(.05 <= interval <= .051 for interval in intervals)
     await freq_limit.clear()
