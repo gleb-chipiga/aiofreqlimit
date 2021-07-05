@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
-from typing import Any, AsyncIterator, Dict, Final, Hashable, Optional
+from types import TracebackType
+from typing import AsyncIterator, Dict, Final, Hashable, Optional, Type
 
 __all__ = ('FreqLimit', '__version__')
 __version__ = '0.0.6'
@@ -19,7 +20,12 @@ class Lock:
         await self._lock.acquire()
         self._count += 1
 
-    async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
         try:
             self._lock.release()
         finally:

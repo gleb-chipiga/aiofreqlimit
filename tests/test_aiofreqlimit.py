@@ -7,8 +7,43 @@ from typing import List, Tuple, cast
 import pytest
 from hypothesis import given
 from hypothesis.strategies import floats
+from pytest_mock import MockerFixture
 
 import aiofreqlimit
+
+
+@pytest.mark.asyncio
+async def test_lock_context_manager_enter(mocker: MockerFixture) -> None:
+    lock = aiofreqlimit.Lock()
+
+    acquire = mocker.patch.object(lock._lock, 'acquire')
+    acquire.side_effect = RuntimeError('acquire')
+    release = mocker.patch.object(lock._lock, 'release')
+    flag = False
+    with pytest.raises(RuntimeError, match='acquire'):
+        async with lock:
+            flag = True
+    assert lock.count == 0
+    acquire.assert_called_once_with()
+    release.assert_not_called()
+    assert not flag
+
+
+@pytest.mark.asyncio
+async def test_lock_context_manager_exit(mocker: MockerFixture) -> None:
+    lock = aiofreqlimit.Lock()
+
+    acquire = mocker.patch.object(lock._lock, 'acquire')
+    release = mocker.patch.object(lock._lock, 'release')
+    release.side_effect = RuntimeError('release')
+    flag = False
+    with pytest.raises(RuntimeError, match='release'):
+        async with lock:
+            flag = True
+    assert lock.count == 0
+    acquire.assert_called_once_with()
+    release.assert_called_once_with()
+    assert flag
 
 
 @pytest.mark.asyncio
