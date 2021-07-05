@@ -1,8 +1,6 @@
 import asyncio
-from contextlib import (AsyncExitStack, asynccontextmanager, contextmanager,
-                        suppress)
-from typing import (AsyncContextManager, AsyncIterator, ContextManager, Dict,
-                    Final, Hashable, Iterator, Optional, cast)
+from contextlib import AsyncExitStack, asynccontextmanager, suppress
+from typing import Any, AsyncIterator, Dict, Final, Hashable, Optional
 
 __all__ = ('FreqLimit', '__version__')
 __version__ = '0.0.4'
@@ -12,18 +10,24 @@ import attr
 
 @attr.s(auto_attribs=True)
 class Lock:
-    count: int = attr.ib(default=0, init=False)
     ts: float = attr.ib(default=-float('inf'), init=False)
-    lock: asyncio.Lock = attr.ib(init=False, factory=asyncio.Lock,
-                                 on_setattr=attr.setters.frozen)
+    _count: int = attr.ib(default=0, init=False)
+    _lock: asyncio.Lock = attr.ib(init=False, factory=asyncio.Lock,
+                                  on_setattr=attr.setters.frozen)
 
-    @contextmanager
-    def count_context(self) -> Iterator[None]:
-        self.count += 1
+    async def __aenter__(self) -> None:
+        self._count += 1
+        await self._lock.__aenter__()
+
+    async def __aexit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
         try:
-            yield
+            await self._lock.__aexit__(exc_type, exc, tb)
         finally:
-            self.count -= 1
+            self._count -= 1
+
+    @property
+    def count(self) -> int:
+        return self._count
 
 
 class FreqLimit:
@@ -52,10 +56,7 @@ class FreqLimit:
             self._locks[key] = Lock()
         async with AsyncExitStack() as stack:
             stack.callback(self._clean_event.set)
-            stack.enter_context(
-                cast(ContextManager[None], self._locks[key].count_context()))
-            await stack.enter_async_context(
-                cast(AsyncContextManager[None], self._locks[key].lock))
+            await stack.enter_async_context(self._locks[key])
             delay = self._interval - self._loop.time() + self._locks[key].ts
             if delay > 0:
                 await asyncio.sleep(delay)

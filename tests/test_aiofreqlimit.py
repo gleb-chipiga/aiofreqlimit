@@ -15,15 +15,12 @@ import aiofreqlimit
 async def test_lock_context_manager() -> None:
     lock = aiofreqlimit.Lock()
 
-    with lock.count_context():
-        assert lock.count == 1
-        with lock.count_context():
-            assert lock.count == 2
+    async with lock:
         assert lock.count == 1
     assert lock.count == 0
 
     with suppress(RuntimeError):
-        with lock.count_context():
+        async with lock:
             assert lock.count == 1
             raise RuntimeError()
     assert lock.count == 0
