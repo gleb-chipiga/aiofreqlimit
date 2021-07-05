@@ -16,12 +16,12 @@ class Lock:
                                   on_setattr=attr.setters.frozen)
 
     async def __aenter__(self) -> None:
+        await self._lock.acquire()
         self._count += 1
-        await self._lock.__aenter__()
 
-    async def __aexit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+    async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:
         try:
-            await self._lock.__aexit__(exc_type, exc, tb)
+            self._lock.release()
         finally:
             self._count -= 1
 
@@ -47,9 +47,7 @@ class FreqLimit:
         self._loop: Final = asyncio.get_running_loop()
 
     @asynccontextmanager
-    async def acquire(
-        self, key: Hashable = None
-    ) -> AsyncIterator[None]:
+    async def resource(self, key: Hashable = None) -> AsyncIterator[None]:
         if self._clean_task is None:
             self._clean_task = asyncio.create_task(self._clean())
         if key not in self._locks:

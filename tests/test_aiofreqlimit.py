@@ -51,7 +51,7 @@ async def test_freq_limit() -> None:
         _freq_limit: aiofreqlimit.FreqLimit, interval: float
     ) -> time_marks:
         time1 = loop.time()
-        async with _freq_limit.acquire('key'):
+        async with _freq_limit.resource('key'):
             assert tuple(freq_limit._locks) == ('key',)
             time2 = loop.time()
             await asyncio.sleep(interval)
@@ -70,7 +70,7 @@ async def test_freq_limit() -> None:
     await asyncio.sleep(.11)
     assert tuple(freq_limit._locks) == ()
 
-    async with freq_limit.acquire('key'):
+    async with freq_limit.resource('key'):
         pass
     assert tuple(freq_limit._locks) == ('key',)
     await asyncio.sleep(.33)
@@ -86,11 +86,11 @@ async def test_freq_limit() -> None:
 async def test_freq_limit_keys() -> None:
     freq_limit = aiofreqlimit.FreqLimit(.1)
     assert tuple(freq_limit._locks) == ()
-    async with freq_limit.acquire('key2'):
+    async with freq_limit.resource('key2'):
         assert tuple(freq_limit._locks.keys()) == ('key2',)
-        async with freq_limit.acquire('key3'):
+        async with freq_limit.resource('key3'):
             assert tuple(freq_limit._locks.keys()) == ('key2', 'key3')
-            async with freq_limit.acquire('key4'):
+            async with freq_limit.resource('key4'):
                 assert tuple(freq_limit._locks.keys()) == (
                     'key2', 'key3', 'key4')
         await asyncio.sleep(.11)
@@ -104,7 +104,7 @@ async def test_freq_limit_keys() -> None:
 async def test_freq_limit_overlaps() -> None:
 
     async def task1(_freq_limit: aiofreqlimit.FreqLimit) -> None:
-        async with _freq_limit.acquire('key1'):
+        async with _freq_limit.resource('key1'):
             assert tuple(_freq_limit._locks) == ('key1',)
             await asyncio.sleep(.11)
             assert tuple(_freq_limit._locks) == ('key1', 'key2')
@@ -112,7 +112,7 @@ async def test_freq_limit_overlaps() -> None:
     async def task2(_freq_limit: aiofreqlimit.FreqLimit) -> None:
         await asyncio.sleep(.05)
         assert tuple(_freq_limit._locks) == ('key1',)
-        async with _freq_limit.acquire('key2'):
+        async with _freq_limit.resource('key2'):
             assert tuple(_freq_limit._locks) == ('key1', 'key2')
             await asyncio.sleep(.16)
             assert tuple(_freq_limit._locks) == ('key2', 'key3')
@@ -120,10 +120,10 @@ async def test_freq_limit_overlaps() -> None:
     async def task3(_freq_limit: aiofreqlimit.FreqLimit) -> None:
         await asyncio.sleep(.21)
         assert tuple(_freq_limit._locks) == ('key2',)
-        async with _freq_limit.acquire('key3'):
+        async with _freq_limit.resource('key3'):
             assert tuple(_freq_limit._locks) == ('key2', 'key3')
             lock2_ref = ref(_freq_limit._locks['key2'])
-            async with _freq_limit.acquire('key2'):
+            async with _freq_limit.resource('key2'):
                 assert tuple(_freq_limit._locks) == ('key2', 'key3')
                 assert lock2_ref() is _freq_limit._locks['key2']
                 await asyncio.sleep(.1)
@@ -152,7 +152,7 @@ async def test_freq_limit_frequency() -> None:
     freq_limit = aiofreqlimit.FreqLimit(.05)
     lock_ref = None
     for i in range(10):
-        async with freq_limit.acquire('key'):
+        async with freq_limit.resource('key'):
             pass
         if i == 0:
             lock_ref = ref(freq_limit._locks['key'])
