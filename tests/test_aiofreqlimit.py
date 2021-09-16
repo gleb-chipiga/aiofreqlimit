@@ -23,7 +23,7 @@ async def test_lock_context_manager_enter(mocker: MockerFixture) -> None:
     with pytest.raises(RuntimeError, match='acquire'):
         async with lock:
             flag = True
-    assert lock.count == 0
+    assert lock.count == 1
     acquire.assert_called_once_with()
     release.assert_not_called()
     assert not flag

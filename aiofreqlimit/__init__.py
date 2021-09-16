@@ -17,8 +17,8 @@ class Lock:
                                   on_setattr=attr.setters.frozen)
 
     async def __aenter__(self) -> None:
-        await self._lock.acquire()
         self._count += 1
+        await self._lock.acquire()
 
     async def __aexit__(
         self,
