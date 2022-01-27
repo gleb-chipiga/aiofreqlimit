@@ -35,7 +35,7 @@ setup(
     ],
     packages=['aiofreqlimit'],
     package_data={'aiofreqlimit': ['py.typed']},
-    python_requires='>=3.8',
+    python_requires='>=3.8,<3.11',
     install_requires=['attrs'],
     tests_require=['pytest', 'pytest-asyncio', 'pytest-mock', 'pytest-cov',
                    'hypothesis']
