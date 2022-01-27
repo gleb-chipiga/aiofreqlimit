@@ -1,5 +1,11 @@
+flake8:
+	flake8 --exclude .tox,.env .
+
+mypy:
+	mypy --strict .
+
 isort:
-	isort aiofreqlimit/__init__.py setup.py
+	isort -s .env -s .tox .
 
 coverage:
 	COVERAGE_FILE=.coverage/.coverage python -m pytest --cov=aiofreqlimit --cov-report term --cov-report html:.coverage tests
