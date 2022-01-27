@@ -1,8 +1,8 @@
 import asyncio
 from contextlib import suppress
-from weakref import ref
 from random import uniform
 from typing import List, Tuple, cast
+from weakref import ref
 
 import pytest
 from hypothesis import given
