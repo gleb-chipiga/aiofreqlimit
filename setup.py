@@ -24,8 +24,9 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'License :: OSI Approved :: MIT License',
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Operating System :: POSIX',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
@@ -36,5 +37,6 @@ setup(
     package_data={'aiofreqlimit': ['py.typed']},
     python_requires='>=3.8',
     install_requires=['attrs'],
-    tests_require=['pytest', 'pytest-asyncio', 'pytest-mock', 'hypothesis']
+    tests_require=['pytest', 'pytest-asyncio', 'pytest-mock', 'pytest-cov',
+                   'hypothesis']
 )
