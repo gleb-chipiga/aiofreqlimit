@@ -3,18 +3,19 @@ from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from types import TracebackType
 from typing import AsyncIterator, Dict, Final, Hashable, Optional, Type
 
-__all__ = ('FreqLimit', '__version__')
-__version__ = '0.0.10'
+__all__ = ("FreqLimit", "__version__")
+__version__ = "0.0.10"
 
 import attr
 
 
 @attr.s(auto_attribs=True)
 class Lock:
-    ts: float = attr.ib(default=-float('inf'), init=False)
+    ts: float = attr.ib(default=-float("inf"), init=False)
     _count: int = attr.ib(default=0, init=False)
-    _lock: asyncio.Lock = attr.ib(init=False, factory=asyncio.Lock,
-                                  on_setattr=attr.setters.frozen)
+    _lock: asyncio.Lock = attr.ib(
+        init=False, factory=asyncio.Lock, on_setattr=attr.setters.frozen
+    )
 
     async def __aenter__(self) -> None:
         self._count += 1
@@ -24,7 +25,7 @@ class Lock:
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None:
         try:
             self._lock.release()
@@ -37,16 +38,17 @@ class Lock:
 
 
 class FreqLimit:
-
     def __init__(self, interval: float, clean_interval: float = 0) -> None:
         if interval <= 0:
-            raise RuntimeError('Interval must be greater than 0')
+            raise RuntimeError("Interval must be greater than 0")
         if clean_interval < 0:
-            raise RuntimeError('Clean interval must be greater than '
-                               'or equal to 0')
+            raise RuntimeError(
+                "Clean interval must be greater than or equal to 0"
+            )
         self._interval: Final[float] = interval
         self._clean_interval: Final[float] = (
-            clean_interval if clean_interval > 0 else interval)
+            clean_interval if clean_interval > 0 else interval
+        )
         self._locks: Final[Dict[Hashable, Lock]] = {}
         self._clean_event: Final = asyncio.Event()
         self._clean_task: Optional[asyncio.Task[None]] = None
