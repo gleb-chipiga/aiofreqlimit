@@ -1,0 +1,30 @@
+[tool.isort]
+profile = "black"
+line_length = 79
+
+[tool.black]
+line-length = 79
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.tox]
+legacy_tox_ini = """
+    [tox]
+    envlist = py39,py310,py311
+
+    [testenv]
+    deps =
+        flake8
+        pytest
+        pytest-asyncio
+        pytest_mock
+        hypothesis
+        importlib-metadata
+        mypy
+
+    commands =
+        flake8 --exclude .tox,.env .
+        mypy --strict .
+        pytest tests
+"""
