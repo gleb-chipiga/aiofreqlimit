@@ -1,0 +1,8 @@
+black
+build
+coverage
+flake8
+isort
+mypy
+tox
+twine
