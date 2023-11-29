@@ -6,16 +6,20 @@ from typing import AsyncIterator, Dict, Final, Hashable, Optional, Type
 __all__ = ("FreqLimit", "__version__")
 __version__ = "0.0.12"
 
-import attr
 
-
-@attr.s(auto_attribs=True)
 class Lock:
-    ts: float = attr.ib(default=-float("inf"), init=False)
-    _count: int = attr.ib(default=0, init=False)
-    _lock: asyncio.Lock = attr.ib(
-        init=False, factory=asyncio.Lock, on_setattr=attr.setters.frozen
-    )
+    def __init__(self) -> None:
+        self._ts: float = -float("inf")
+        self._count: int = 0
+        self._lock: Final = asyncio.Lock()
+
+    @property
+    def ts(self) -> float:
+        return self._ts
+
+    @ts.setter
+    def ts(self, ts: float) -> None:
+        self._ts = ts
 
     async def __aenter__(self) -> None:
         self._count += 1
