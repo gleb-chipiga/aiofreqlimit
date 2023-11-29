@@ -24,7 +24,7 @@ legacy_tox_ini = """
         mypy
 
     commands =
-        flake8 --exclude .tox,.env .
+        flake8 --exclude .tox .
         mypy --strict .
         pytest tests
 """
