@@ -10,6 +10,9 @@ isort:
 black: isort
     black --extend-exclude="\.env/|\.tox/" .
 
+test:
+    python -m pytest tests
+
 coverage:
     COVERAGE_FILE=.coverage/.coverage python -m pytest --cov=aiofreqlimit \
     --cov-report term --cov-report html:.coverage tests
