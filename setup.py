@@ -25,6 +25,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "License :: OSI Approved :: MIT License",
         "Development Status :: 4 - Beta",
         "Operating System :: POSIX",
@@ -35,7 +36,7 @@ setup(
     ],
     packages=["aiofreqlimit"],
     package_data={"aiofreqlimit": ["py.typed"]},
-    python_requires=">=3.9,<3.12",
+    python_requires=">=3.9,<3.13",
     tests_require=[
         "pytest",
         "pytest-asyncio",
