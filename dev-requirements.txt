@@ -4,5 +4,7 @@ coverage
 flake8
 isort
 mypy
+pyright
+sort-all
 tox
 twine
