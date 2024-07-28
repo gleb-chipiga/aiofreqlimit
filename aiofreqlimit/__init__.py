@@ -1,7 +1,7 @@
 import asyncio
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from types import TracebackType
-from typing import AsyncIterator, Dict, Final, Hashable, Optional, Type
+from typing import AsyncIterator, Final, Hashable
 
 __all__ = ("FreqLimit", "__version__")
 __version__ = "0.0.14"
@@ -9,8 +9,8 @@ __version__ = "0.0.14"
 
 class Lock:
     def __init__(self) -> None:
-        self._ts: float = -float("inf")
-        self._count: int = 0
+        self._ts = -float("inf")
+        self._count = 0
         self._lock: Final = asyncio.Lock()
 
     @property
@@ -27,9 +27,9 @@ class Lock:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         try:
             self._lock.release()
@@ -42,24 +42,31 @@ class Lock:
 
 
 class FreqLimit:
-    def __init__(self, interval: float, clean_interval: float = 0) -> None:
+    def __init__(
+        self,
+        interval: float,
+        clean_interval: float = 0,
+    ) -> None:
         if interval <= 0:
             raise RuntimeError("Interval must be greater than 0")
         if clean_interval < 0:
             raise RuntimeError(
                 "Clean interval must be greater than or equal to 0"
             )
-        self._interval: Final[float] = interval
-        self._clean_interval: Final[float] = (
+        self._interval: Final = interval
+        self._clean_interval: Final = (
             clean_interval if clean_interval > 0 else interval
         )
-        self._locks: Final[Dict[Hashable, Lock]] = {}
+        self._locks: Final = dict[Hashable, Lock]()
         self._clean_event: Final = asyncio.Event()
-        self._clean_task: Optional[asyncio.Task[None]] = None
+        self._clean_task: asyncio.Task[None] | None = None
         self._loop: Final = asyncio.get_running_loop()
 
     @asynccontextmanager
-    async def resource(self, key: Hashable = None) -> AsyncIterator[None]:
+    async def resource(
+        self,
+        key: Hashable = None,
+    ) -> AsyncIterator[None]:
         if self._clean_task is None:
             self._clean_task = asyncio.create_task(self._clean())
         if key not in self._locks:

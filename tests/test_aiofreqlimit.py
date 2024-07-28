@@ -1,7 +1,7 @@
 import asyncio
 from contextlib import suppress
 from random import uniform
-from typing import List, Tuple, cast
+from typing import cast
 from weakref import ref
 
 import pytest
@@ -85,11 +85,10 @@ def test_freq_limit_clean_interval(
 async def test_freq_limit() -> None:
     freq_limit = aiofreqlimit.FreqLimit(0.1)
     loop = asyncio.get_running_loop()
-    time_marks = Tuple[float, float, float]
 
     async def limit(
         _freq_limit: aiofreqlimit.FreqLimit, interval: float
-    ) -> time_marks:
+    ) -> tuple[float, float, float]:
         time1 = loop.time()
         async with _freq_limit.resource("key"):
             assert tuple(freq_limit._locks) == ("key",)
@@ -99,7 +98,10 @@ async def test_freq_limit() -> None:
         return time2, time3, time2 - time1
 
     tasks = (limit(freq_limit, uniform(0, 0.1)) for _ in range(5))
-    intervals = cast(List[time_marks], await asyncio.gather(*tasks))
+    intervals = cast(
+        list[tuple[float, float, float]],
+        await asyncio.gather(*tasks),
+    )
     assert all(isinstance(value, tuple) for value in intervals)
     intervals = sorted(intervals, key=lambda interval: interval[0])
     for i in range(len(intervals)):
@@ -187,7 +189,7 @@ async def test_freq_limit_overlaps() -> None:
 @pytest.mark.asyncio
 async def test_freq_limit_frequency() -> None:
     loop = asyncio.get_running_loop()
-    intervals: List[float] = []
+    intervals: list[float] = []
     time = loop.time()
     freq_limit = aiofreqlimit.FreqLimit(0.05)
     lock_ref = None
