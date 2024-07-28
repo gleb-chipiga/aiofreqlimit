@@ -4,7 +4,7 @@ from types import TracebackType
 from typing import AsyncIterator, Final, Hashable
 
 __all__ = ("FreqLimit", "__version__")
-__version__ = "0.0.15"
+__version__ = "0.0.16"
 
 
 class Lock:
