@@ -1,10 +1,22 @@
-About
-=====
-Frequency limit context manager for asyncio.
+===========================================
+Frequency limit context manager for asyncio
+===========================================
+
+.. image:: https://badge.fury.io/py/aiofreqlimit.svg
+   :target: https://pypi.org/project/aiofreqlimit
+   :alt: Latest PyPI package version
+
+.. image:: https://img.shields.io/badge/license-MIT-blue.svg
+   :target: https://github.com/gleb-chipiga/aiofreqlimit/blob/master/LICENSE
+   :alt: License
+
+.. image:: https://img.shields.io/pypi/dm/aiofreqlimit
+   :target: https://pypistats.org/packages/aiofreqlimit
+   :alt: Downloads count
 
 Installation
 ============
-aiofreqlimit requires Python 3.8 or greater and is available on PyPI. Use pip to install it:
+aiofreqlimit requires Python 3.11 or greater and is available on PyPI. Use pip to install it:
 
 .. code-block:: bash
 
