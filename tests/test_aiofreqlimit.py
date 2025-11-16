@@ -1,7 +1,6 @@
 import asyncio
 from contextlib import suppress
 from random import uniform
-from typing import cast
 from weakref import ref
 
 import pytest
@@ -10,6 +9,8 @@ from hypothesis.strategies import floats
 from pytest_mock import MockerFixture
 
 import aiofreqlimit
+
+# pyright: reportPrivateUsage=false
 
 
 @pytest.mark.asyncio
@@ -64,21 +65,19 @@ async def test_lock_context_manager() -> None:
 @given(interval=floats(max_value=0))
 def test_freq_limit_interval(interval: float) -> None:
     with pytest.raises(RuntimeError, match="Interval must be greater than 0"):
-        aiofreqlimit.FreqLimit(interval)
+        _ = aiofreqlimit.FreqLimit(interval)
 
 
 @given(
     interval=floats(min_value=0, exclude_min=True),
     clean_interval=floats(max_value=0, exclude_max=True),
 )
-def test_freq_limit_clean_interval(
-    interval: float, clean_interval: float
-) -> None:
+def test_freq_limit_clean_interval(interval: float, clean_interval: float) -> None:
     with pytest.raises(
         RuntimeError,
         match="Clean interval must be greater than or equal to 0",
     ):
-        aiofreqlimit.FreqLimit(interval, clean_interval)
+        _ = aiofreqlimit.FreqLimit(interval, clean_interval)
 
 
 @pytest.mark.asyncio
@@ -98,10 +97,7 @@ async def test_freq_limit() -> None:
         return time2, time3, time2 - time1
 
     tasks = (limit(freq_limit, uniform(0, 0.1)) for _ in range(5))
-    intervals = cast(
-        list[tuple[float, float, float]],
-        await asyncio.gather(*tasks),
-    )
+    intervals: list[tuple[float, float, float]] = await asyncio.gather(*tasks)
     assert all(isinstance(value, tuple) for value in intervals)
     intervals = sorted(intervals, key=lambda interval: interval[0])
     for i in range(len(intervals)):
@@ -180,9 +176,7 @@ async def test_freq_limit_overlaps() -> None:
         assert tuple(_freq_limit._locks) == ()
 
     freq_limit = aiofreqlimit.FreqLimit(0.1)
-    await asyncio.gather(
-        task1(freq_limit), task2(freq_limit), task3(freq_limit)
-    )
+    _ = await asyncio.gather(task1(freq_limit), task2(freq_limit), task3(freq_limit))
     await freq_limit.clear()
 
 

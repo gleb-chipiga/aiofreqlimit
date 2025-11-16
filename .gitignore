@@ -1,6 +1,8 @@
 .*
 !.gitignore
+!.github
 *.egg-info
 build
 dist
 .python-version
+__pycache__
