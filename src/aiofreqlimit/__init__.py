@@ -4,8 +4,9 @@ from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from types import TracebackType
 from typing import Final
 
+from ._version import __version__
+
 __all__ = ("FreqLimit", "__version__")
-__version__ = "0.0.16"
 
 
 class Lock:
