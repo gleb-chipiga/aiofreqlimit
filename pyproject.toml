@@ -6,7 +6,7 @@ build-backend = "uv_build"
 name = "aiofreqlimit"
 version = "0.1.2"
 description = "Frequency limit for asyncio"
-readme = "README.rst"
+readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Gleb Chipiga" }]
 requires-python = ">=3.11,<3.15"
