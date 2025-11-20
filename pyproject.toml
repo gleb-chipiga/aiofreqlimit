@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "aiofreqlimit"
-version = "0.1.4"
+version = "0.1.5"
 description = "Frequency limit for asyncio"
 readme = "README.md"
 license = { file = "LICENSE" }
