@@ -8,3 +8,4 @@ dist
 .python-version
 __pycache__
 pyrightconfig.json
+codebook.toml
