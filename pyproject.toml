@@ -30,51 +30,51 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-redis = ["redis>=5.0.0"]
+redis = ["redis>=5.0.0,<6.0.0"]
 test = [
-    "pytest>=9.0.1",
-    "pytest-asyncio>=1.3.0",
-    "hypothesis>=6.148.1",
-    "pytest-cov>=7.0.0",
-    "pytest-mock>=3.14.0",
-    "redis>=5.0.0",
-    "testcontainers[redis]>=4.3.3",
+    "pytest>=9.0.1,<10.0.0",
+    "pytest-asyncio>=1.3.0,<2.0.0",
+    "hypothesis>=6.148.1,<7.0.0",
+    "pytest-cov>=7.0.0,<8.0.0",
+    "pytest-mock>=3.14.0,<4.0.0",
+    "redis>=5.0.0,<6.0.0",
+    "testcontainers[redis]>=4.3.3,<5.0.0",
 ]
 
 [dependency-groups]
 lint = [
-    "basedpyright>=1.33.0",
-    "mypy>=1.18.2",
-    "ruff>=0.14.5",
-    "pytest>=9.0.1",
-    "pytest-asyncio>=1.3.0",
-    "pytest-mock>=3.14.0",
-    "redis>=5.0.0",
-    "hypothesis>=6.148.1",
-    "testcontainers[redis]>=4.3.3",
+    "basedpyright>=1.33.0,<2.0.0",
+    "mypy>=1.18.2,<2.0.0",
+    "ruff>=0.14.5,<0.15.0",
+    "pytest>=9.0.1,<10.0.0",
+    "pytest-asyncio>=1.3.0,<2.0.0",
+    "pytest-mock>=3.14.0,<4.0.0",
+    "redis>=5.0.0,<6.0.0",
+    "hypothesis>=6.148.1,<7.0.0",
+    "testcontainers[redis]>=4.3.3,<5.0.0",
 ]
 test = [
-    "hypothesis>=6.148.1",
-    "pytest>=9.0.1",
-    "pytest-asyncio>=1.3.0",
-    "pytest-cov>=7.0.0",
-    "pytest-mock>=3.14.0",
-    "redis>=5.0.0",
-    "testcontainers[redis]>=4.3.3",
+    "hypothesis>=6.148.1,<7.0.0",
+    "pytest>=9.0.1,<10.0.0",
+    "pytest-asyncio>=1.3.0,<2.0.0",
+    "pytest-cov>=7.0.0,<8.0.0",
+    "pytest-mock>=3.14.0,<4.0.0",
+    "redis>=5.0.0,<6.0.0",
+    "testcontainers[redis]>=4.3.3,<5.0.0",
 ]
 dev = [
-    "basedpyright>=1.33.0",
-    "build>=1.3.0",
-    "hypothesis>=6.148.1",
-    "mypy>=1.18.2",
-    "pytest>=9.0.1",
-    "pytest-asyncio>=1.3.0",
-    "pytest-cov>=7.0.0",
-    "pytest-mock>=3.14.0",
-    "redis>=5.0.0",
-    "testcontainers[redis]>=4.3.3",
-    "ruff>=0.14.5",
-    "twine>=6.2.0",
+    "basedpyright>=1.33.0,<2.0.0",
+    "build>=1.3.0,<2.0.0",
+    "hypothesis>=6.148.1,<7.0.0",
+    "mypy>=1.18.2,<2.0.0",
+    "pytest>=9.0.1,<10.0.0",
+    "pytest-asyncio>=1.3.0,<2.0.0",
+    "pytest-cov>=7.0.0,<8.0.0",
+    "pytest-mock>=3.14.0,<4.0.0",
+    "redis>=5.0.0,<6.0.0",
+    "testcontainers[redis]>=4.3.3,<5.0.0",
+    "ruff>=0.14.5,<0.15.0",
+    "twine>=6.2.0,<7.0.0",
 ]
 
 [tool.ruff]
@@ -124,7 +124,7 @@ filterwarnings = [
 ]
 
 [tool.tox]
-requires = ["tox>=4.22", "tox-uv>=1.15"]
+requires = ["tox>=4.22,<5.0", "tox-uv>=1.15,<2.0"]
 env_list = ["py311", "py312", "py313", "py314", "lint"]
 
 [tool.tox.env_run_base]
