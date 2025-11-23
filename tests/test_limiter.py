@@ -49,7 +49,7 @@ async def test_resource_calls_backend_with_default_key() -> None:
 
     assert len(backend.calls) == 1
     key, _, called_params = backend.calls[0]
-    assert key == "_global"
+    assert key is None
     assert called_params is params
 
 

@@ -45,14 +45,7 @@ class FreqLimit:
 
     @asynccontextmanager
     async def resource(self, key: Hashable | None = None) -> AsyncIterator[None]:
-        """
-        Context manager that enforces the limit.
-
-        key=None — global bucket (single key for whole limiter).
-        """
-        if key is None:
-            key = "_global"
-
+        """Context manager that enforces the limit."""
         loop = asyncio.get_running_loop()
         now = loop.time()
         delay = await self._backend.reserve(key, now, self._params)

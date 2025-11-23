@@ -157,3 +157,19 @@ async def test_redis_backend_clear_keeps_foreign_keys(
     await redis_backend.clear()
 
     assert await redis_client.get("foreign") == "1"
+
+
+@pytest.mark.asyncio
+async def test_redis_backend_accepts_none_key(
+    redis_backend: RedisBackend, redis_client: redis.Redis
+) -> None:
+    """None key should be accepted and stored under prefix."""
+
+    params = FreqLimitParams(limit=1, period=1.0)
+
+    delay = await redis_backend.reserve(None, now=0.0, params=params)
+
+    assert delay == 0.0
+    ttl = await redis_client.ttl("test:freqlimit:None")
+    assert ttl is not None
+    assert ttl >= 1

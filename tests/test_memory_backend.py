@@ -117,3 +117,17 @@ async def test_idle_ttl_eviction() -> None:
 
     assert "k1" in backend._tat
     assert "k2" not in backend._tat
+
+
+@pytest.mark.asyncio
+async def test_reserve_accepts_none_key() -> None:
+    """None key must behave like any other hashable."""
+
+    backend = InMemoryBackend()
+    params = FreqLimitParams(limit=1, period=1.0)
+
+    delay1 = await backend.reserve(None, now=0.0, params=params)
+    delay2 = await backend.reserve(None, now=0.0, params=params)
+
+    assert delay1 == 0.0
+    assert delay2 > 0.0
