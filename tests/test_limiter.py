@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 
 import pytest
@@ -22,6 +20,22 @@ class SpyBackend:
     ) -> float:
         self.calls.append((key, now, params))
         return self.delay
+
+
+class NoClearBackend(SpyBackend):
+    """Backend without clear() to hit FreqLimit.clear no-op branch."""
+
+
+class AsyncClearBackend(SpyBackend):
+    """Backend with async clear() to ensure awaiting."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.cleared: bool = False
+
+    async def clear(self) -> None:
+        await asyncio.sleep(0)
+        self.cleared = True
 
 
 @pytest.mark.asyncio
@@ -65,3 +79,23 @@ async def test_resource_waits_for_delay() -> None:
     elapsed = loop.time() - start
 
     assert elapsed >= 0.045  # allow small jitter
+
+
+@pytest.mark.asyncio
+async def test_clear_is_noop_if_backend_has_no_clear() -> None:
+    params = FreqLimitParams(limit=1, period=1.0)
+    backend = NoClearBackend()
+    limiter = FreqLimit(params, backend=backend)
+
+    await limiter.clear()  # should not raise
+
+
+@pytest.mark.asyncio
+async def test_clear_awaits_backend_async_clear() -> None:
+    params = FreqLimitParams(limit=1, period=1.0)
+    backend = AsyncClearBackend()
+    limiter = FreqLimit(params, backend=backend)
+
+    await limiter.clear()
+
+    assert backend.cleared is True

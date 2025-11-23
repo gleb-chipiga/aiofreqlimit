@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 from hypothesis import given, strategies as st
+from pytest import approx
 
 from aiofreqlimit import FreqLimitParams
 from aiofreqlimit.gcra import gcra_step
@@ -44,3 +43,21 @@ def test_gcra_step_basic_invariants(
 
     # And it cannot lead too far (strict GCRA bound)
     assert new_tat - effective_now <= params.interval + params.tau + 1e-9
+
+
+def test_gcra_step_early_arrival_adds_delay() -> None:
+    params = FreqLimitParams(limit=2, period=1.0, burst=1)  # interval = 0.5, tau = 0
+
+    new_tat, delay = gcra_step(now=1.0, tat=1.5, params=params)
+
+    assert delay == approx(0.5, rel=1e-12)
+    assert new_tat == approx(2.0, rel=1e-12)
+
+
+def test_gcra_step_late_arrival_has_zero_delay() -> None:
+    params = FreqLimitParams(limit=2, period=1.0, burst=1)
+
+    new_tat, delay = gcra_step(now=2.0, tat=1.5, params=params)
+
+    assert delay == 0.0
+    assert new_tat == approx(2.5, rel=1e-12)
