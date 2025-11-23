@@ -110,6 +110,40 @@ async def test_redis_backend_sets_ttl_with_buffer(
 
 
 @pytest.mark.asyncio
+async def test_redis_backend_ttl_equals_interval_plus_extra(
+    redis_backend: RedisBackend, redis_client: redis.Redis
+) -> None:
+    """TTL не должна превышать interval + extra_ttl для limit=1."""
+
+    params = FreqLimitParams(limit=1, period=1.0)
+
+    _ = await redis_backend.reserve("ttl_exact", now=0.0, params=params)
+
+    ttl = await redis_client.ttl("test:freqlimit:ttl_exact")
+
+    assert ttl is not None
+    assert (
+        1 <= ttl <= 2
+    )  # expected ~2s (ceil), anything higher means double-counted TTL
+
+
+@pytest.mark.asyncio
+async def test_redis_backend_ttl_not_inflated_by_tau(
+    redis_backend: RedisBackend, redis_client: redis.Redis
+) -> None:
+    """Tau (burst slack) не должен увеличивать TTL."""
+
+    params = FreqLimitParams(limit=2, period=2.0, burst=2)  # interval=1s, tau=1s
+
+    _ = await redis_backend.reserve("ttl_tau", now=0.0, params=params)
+
+    ttl = await redis_client.ttl("test:freqlimit:ttl_tau")
+
+    assert ttl is not None
+    assert 1 <= ttl <= 2  # still ~interval (1s) + extra_ttl (1s)
+
+
+@pytest.mark.asyncio
 async def test_redis_backend_clear_keeps_foreign_keys(
     redis_backend: RedisBackend,
     redis_client: redis.Redis,

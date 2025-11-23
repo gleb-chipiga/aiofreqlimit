@@ -106,14 +106,14 @@ class RedisBackend:
         redis_key = f"{self._prefix}{key}"
         interval = params.interval
         tau = params.tau
-        # TTL: debt horizon plus buffer
-        base_ttl = interval + tau + self._extra_ttl
+        # TTL buffer after backlog is cleared; Lua adds debt duration
+        extra_ttl = self._extra_ttl
 
         _ = now  # server time is used inside Lua script
 
         delay_str: str = await self._script(
             keys=[redis_key],
-            args=[interval, tau, base_ttl],
+            args=[interval, tau, extra_ttl],
         )
         return float(delay_str)
 
