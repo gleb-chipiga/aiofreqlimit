@@ -21,6 +21,7 @@ repos:
           - --strict
           - src/aiofreqlimit
           - tests
+          - typings
         pass_filenames: false
         additional_dependencies:
           - pytest>=9.0.1

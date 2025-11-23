@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 import inspect
 from collections.abc import AsyncIterator, Awaitable, Callable, Hashable
@@ -36,7 +34,6 @@ class FreqLimit:
     ) -> None:
         self._params: Final = params
         self._backend: Final = backend
-        self._loop: Final = asyncio.get_running_loop()
 
     @property
     def params(self) -> FreqLimitParams:
@@ -56,7 +53,8 @@ class FreqLimit:
         if key is None:
             key = "_global"
 
-        now = self._loop.time()
+        loop = asyncio.get_running_loop()
+        now = loop.time()
         delay = await self._backend.reserve(key, now, self._params)
         if delay > 0:
             await asyncio.sleep(delay)

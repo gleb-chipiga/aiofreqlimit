@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from ._version import __version__
 from .backends import FreqLimitBackend
 from .gcra import gcra_step

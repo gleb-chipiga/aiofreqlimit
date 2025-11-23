@@ -1,12 +1,11 @@
-from __future__ import annotations
-
-# pyright: reportPrivateUsage=false
 import asyncio
 import contextlib
 from collections.abc import Hashable
 
 from aiofreqlimit.gcra import gcra_step
 from aiofreqlimit.params import FreqLimitParams
+
+# pyright: reportPrivateUsage=false
 
 __all__ = ("InMemoryBackend",)
 
