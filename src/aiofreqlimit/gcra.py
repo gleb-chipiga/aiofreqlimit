@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from .params import FreqLimitParams
 
 __all__ = ("gcra_step",)
@@ -26,11 +24,8 @@ def gcra_step(
     if tat is None:
         tat = now
 
-    interval = params.interval
-    tau = params.tau
-
     # Earliest moment when the packet would be conforming
-    allowed_time = tat - tau
+    allowed_time = tat - params.tau
 
     delay = 0.0
     effective_now = now
@@ -40,8 +35,12 @@ def gcra_step(
         effective_now = allowed_time
 
     # GCRA virtual scheduling:
-    # - if arrived late      → tat = effective_now + interval
-    # - if slightly early    → tat = tat + interval
-    tat = effective_now + interval if effective_now >= tat else tat + interval
+    # - if arrived late      → tat = effective_now + params.interval
+    # - if slightly early    → tat = tat + params.interval
+    tat = (
+        effective_now + params.interval
+        if effective_now >= tat
+        else tat + params.interval
+    )
 
     return tat, delay
