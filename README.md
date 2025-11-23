@@ -61,7 +61,13 @@ TELEGRAM_PER_GROUP = FreqLimitParams(limit=20, period=60.0, burst=3)
   - `idle_ttl: float | None` — drop idle keys after this many seconds (default: None).
   - `sweeper_interval: float | None` — optional background cleanup period; set to
     enable a sweeper task (default: None).
-- Implement `FreqLimitBackend` to plug in Redis/DB/etc.:
+- `RedisBackend` (shared, multi-host) — import from `aiofreqlimit.backends.redis`.
+  - Install optional deps: `pip install aiofreqlimit[redis]`.
+  - Uses Redis server time and a Lua script for atomic GCRA steps.
+  - `prefix: str` — key prefix (default `freqlimit:gcra:`).
+  - `extra_ttl: float` — small buffer added to debt horizon; controls how long keys
+    stay after backlog is cleared.
+- Implement `FreqLimitBackend` to plug in other stores:
 
 ```python
 from collections.abc import Hashable
@@ -82,6 +88,9 @@ The library ships with pytest + hypothesis tests. To run them with uv:
 ```bash
 uv run pytest tests
 ```
+
+Integration tests for the Redis backend use Testcontainers; Docker must be available
+for those cases.
 
 ## License
 
