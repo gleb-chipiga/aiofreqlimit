@@ -1,8 +1,23 @@
+from typing import Protocol, cast
+
 from hypothesis import given, strategies as st
-from pytest import approx
+from pytest import approx as _approx  # pyright: ignore[reportUnknownVariableType]
 
 from aiofreqlimit import FreqLimitParams
 from aiofreqlimit.gcra import gcra_step
+
+
+class _ApproxCallable(Protocol):
+    def __call__(
+        self,
+        expected: float,
+        rel: float | None = ...,
+        abs: float | None = ...,
+        nan_ok: bool = False,
+    ) -> object: ...
+
+
+approx: _ApproxCallable = cast(_ApproxCallable, _approx)
 
 
 @given(

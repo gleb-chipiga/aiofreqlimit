@@ -2,10 +2,9 @@ import asyncio
 import itertools
 
 import pytest
-import redis.asyncio as redis
 
 from aiofreqlimit import FreqLimit
-from aiofreqlimit.backends.redis import RedisBackend
+from aiofreqlimit.backends.redis import RedisBackend, RedisClientProtocol
 from aiofreqlimit.params import FreqLimitParams
 
 
@@ -96,7 +95,7 @@ async def test_redis_backend_burst_allows_free_tokens(
 
 @pytest.mark.asyncio
 async def test_redis_backend_sets_ttl_with_buffer(
-    redis_backend: RedisBackend, redis_client: redis.Redis
+    redis_backend: RedisBackend, redis_client: RedisClientProtocol
 ) -> None:
     """TTL ~ interval+extra_ttl; checks Lua TTL math."""
     params = FreqLimitParams(limit=1, period=1.0)
@@ -111,7 +110,7 @@ async def test_redis_backend_sets_ttl_with_buffer(
 
 @pytest.mark.asyncio
 async def test_redis_backend_ttl_equals_interval_plus_extra(
-    redis_backend: RedisBackend, redis_client: redis.Redis
+    redis_backend: RedisBackend, redis_client: RedisClientProtocol
 ) -> None:
     """TTL не должна превышать interval + extra_ttl для limit=1."""
 
@@ -129,7 +128,7 @@ async def test_redis_backend_ttl_equals_interval_plus_extra(
 
 @pytest.mark.asyncio
 async def test_redis_backend_ttl_not_inflated_by_tau(
-    redis_backend: RedisBackend, redis_client: redis.Redis
+    redis_backend: RedisBackend, redis_client: RedisClientProtocol
 ) -> None:
     """Tau (burst slack) не должен увеличивать TTL."""
 
@@ -146,7 +145,7 @@ async def test_redis_backend_ttl_not_inflated_by_tau(
 @pytest.mark.asyncio
 async def test_redis_backend_clear_keeps_foreign_keys(
     redis_backend: RedisBackend,
-    redis_client: redis.Redis,
+    redis_client: RedisClientProtocol,
 ) -> None:
     """clear() must not delete non-prefixed keys."""
     _ = await redis_client.set("foreign", "1")
@@ -161,7 +160,7 @@ async def test_redis_backend_clear_keeps_foreign_keys(
 
 @pytest.mark.asyncio
 async def test_redis_backend_accepts_none_key(
-    redis_backend: RedisBackend, redis_client: redis.Redis
+    redis_backend: RedisBackend, redis_client: RedisClientProtocol
 ) -> None:
     """None key should be accepted and stored under prefix."""
 

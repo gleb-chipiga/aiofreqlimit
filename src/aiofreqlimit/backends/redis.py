@@ -1,13 +1,36 @@
-from collections.abc import Hashable
-from textwrap import dedent as ddent
-from typing import Final
+from __future__ import annotations
 
-from redis.asyncio import Redis
-from redis.commands.core import Script
+from collections.abc import AsyncIterator, Hashable
+from textwrap import dedent as ddent
+from typing import Final, Protocol
 
 from ..params import FreqLimitParams
 
-__all__ = ("GCRA_LUA", "RedisBackend")
+__all__ = ("GCRA_LUA", "RedisBackend", "RedisClientProtocol", "ScriptProtocol")
+
+
+# Local protocol copies of the minimal Redis surface we rely on.
+# Mirrors the .pyi stubs we shipped, so type checkers stay happy even
+# if external redis stubs are absent.
+class ScriptProtocol(Protocol):
+    async def __call__(self, *, keys: list[str], args: list[float]) -> str: ...
+
+
+class RedisClientProtocol(Protocol):
+    @classmethod
+    def from_url(
+        cls, url: str, *, decode_responses: bool = ...
+    ) -> RedisClientProtocol: ...
+
+    def register_script(self, script: str) -> ScriptProtocol: ...
+    def scan_iter(self, *, match: str = "*") -> AsyncIterator[str]: ...
+    async def delete(self, *names: str | bytes | memoryview) -> object: ...
+    async def ttl(self, name: str | bytes | memoryview) -> int | float | None: ...
+    async def set(self, name: str | bytes | memoryview, value: object) -> object: ...
+    async def get(self, name: str | bytes | memoryview) -> object: ...
+    async def ping(self) -> object: ...
+    async def aclose(self) -> object: ...
+
 
 # Lua script: single GCRA step + TTL handling (atomic on Redis).
 #
@@ -80,7 +103,7 @@ class RedisBackend:
 
     def __init__(
         self,
-        redis: Redis,
+        redis: RedisClientProtocol,
         *,
         prefix: str = "freqlimit:gcra:",
         extra_ttl: float = 0.0,
@@ -91,11 +114,12 @@ class RedisBackend:
         extra_ttl — extra TTL buffer after backlog is cleared (seconds).
         """
 
-        self._redis: Final[Redis] = redis
+        # Keep only the minimal protocol surface for type checkers.
+        self._redis: Final[RedisClientProtocol] = redis
         self._prefix: Final = prefix
         self._extra_ttl: Final = float(extra_ttl)
         # Script object caches SHA and transparently uses EVAL/EVALSHA.
-        self._script: Script = redis.register_script(GCRA_LUA)
+        self._script: ScriptProtocol = redis.register_script(GCRA_LUA)
 
     async def reserve(
         self,
